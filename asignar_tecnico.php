@@ -11,7 +11,7 @@ if (isset($_POST['id_reporte']) && isset($_POST['correo_tecnico'])) {
     $correo_tecnico = $_POST['correo_tecnico'];
 
     // Actualizar el reporte con el correo del técnico asignado
-    $sql = "UPDATE reportesnuevos SET correo_tecnico = ? WHERE id = ?";
+    $sql = "UPDATE reportesnuevos SET correo_tecnico = ?, estado='En Proceso' WHERE id = ?";
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("si", $correo_tecnico, $id_reporte);
 

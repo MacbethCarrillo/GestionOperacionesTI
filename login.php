@@ -85,9 +85,16 @@ $conexion->close(); // Cerrar la conexión a la base de datos
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 400px;
+            text-align: center;
         }
         h1 {
-            text-align: center;
+            margin-top: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        .logo {
+            width: 120px; /* Ajusta el tamaño del logo */
+            margin-bottom: 20px; /* Espaciado debajo del logo */
         }
         label {
             display: block;
@@ -121,14 +128,21 @@ $conexion->close(); // Cerrar la conexión a la base de datos
 </head>
 <body>
     <form action="login.php" method="POST">
+        <!-- Logo -->
+        <img src="logo.png" alt="Logo" class="logo">
         <h1>Iniciar Sesión</h1>
+        
+        <!-- Mensaje de error -->
         <?php if (isset($error)): ?>
             <div class="error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
+
         <label for="correo">Correo:</label>
         <input type="email" name="correo" id="correo" required>
+        
         <label for="contrasena">Contraseña:</label>
         <input type="password" name="contrasena" id="contrasena" required>
+        
         <button type="submit">Iniciar Sesión</button>
     </form>
 </body>

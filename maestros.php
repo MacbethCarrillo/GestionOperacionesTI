@@ -17,13 +17,23 @@ if ($conexion->connect_error) {
 }
 
 // Consulta para obtener los reportes con estado 'Resuelto' enviados por el usuario logueado
-$sql_resueltos = "SELECT id, nombre, descripcion, fecha_reporte, correo_tecnico, prioridad, comentarios, fecha_resuelto, calificacion 
+$sql_resueltos = "SELECT id, nombre, descripcion, fecha_reporte, correo_tecnico, prioridad, comentarios,solucion, fecha_resuelto, calificacion 
                   FROM reportesnuevos 
                   WHERE estado = 'Resuelto' AND correo = ?";
 $stmt = $conexion->prepare($sql_resueltos);
 $stmt->bind_param("s", $correo_usuario);
 $stmt->execute();
 $result_resueltos = $stmt->get_result();
+
+// Consultas para reportes 'Pendientes'
+$sql_pendientes = "SELECT id, nombre, descripcion, fecha_reporte, correo_tecnico, prioridad
+                   FROM reportesnuevos 
+                   WHERE (estado = 'Pendiente' OR estado = 'En Proceso') AND correo = ?";
+
+$stmt_pendientes = $conexion->prepare($sql_pendientes);
+$stmt_pendientes->bind_param("s", $correo_usuario);
+$stmt_pendientes->execute();
+$result_pendientes = $stmt_pendientes->get_result();
 ?>
 
     <!DOCTYPE html>
@@ -32,13 +42,174 @@ $result_resueltos = $stmt->get_result();
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Portal Maestro</title>
+        <style>
+
+ .btn-rojo {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: red; /* Color rojo */
+    color: white; /* Texto blanco */
+    text-align: center;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px; /* Bordes redondeados */
+    transition: background-color 0.3s ease;
+}
+
+.btn-rojo:hover {
+    background-color: darkred; /* Cambia a un tono más oscuro de rojo cuando se pasa el ratón */
+}
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-top: 20px;
+}
+
+p {
+    font-size: 16px;
+    color: #555;
+}
+
+a {
+    color: #1e90ff;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+form {
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+form label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+form select, form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+form button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+form button:hover {
+    background-color: #45a049;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.hidden {
+    display: none;
+}
+
+textarea {
+    resize: none;
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 24px;
+    }
+
+    form {
+        width: 90%;
+        padding: 15px;
+    }
+
+    table {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    form {
+        padding: 10px;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    button {
+        font-size: 14px;
+    }
+   
+}
+
+        </style>
     </head>
     <body>
         <h1>Bienvenido Maestro, <?php echo $_SESSION['nombre']; ?>!</h1>
+        <h1>Este es el portal para los maestros.</h1>
         <p><strong>Area:</strong> <?php echo $_SESSION['area']; ?></p>
         <p><strong>id:</strong> <?php echo $_SESSION['correo']; ?></p>
-        <p>Este es el portal para los maestros.</p>
-        <a href="logout.php">Cerrar sesión</a>
+        <a href="logout.php" class="btn-rojo">Cerrar sesión</a>
+        
+        
 
         <form action="procesar_reporte.php" method="POST">
     <label for="hardware">Seleccione el hardware:</label>
@@ -136,66 +307,105 @@ $result_resueltos = $stmt->get_result();
         }
         </style>
 <script>
-        function toggleTable() {
-            const table = document.getElementById("tabla-reportes");
-            table.classList.toggle("hidden");
-        }
-    </script>
+    // Mostrar/ocultar tabla de reportes resueltos
+    function toggleTableResueltos() {
+        const table = document.getElementById("tabla-resueltos");
+        table.classList.toggle("hidden");
+    }
+
+    // Mostrar/ocultar tabla de reportes pendientes
+    function toggleTablePendientes() {
+        const table = document.getElementById("tabla-pendientes");
+        table.classList.toggle("hidden");
+    }
+</script>
+<!-- Botón para reportes resueltos -->
 <BR><BR>
-<button onclick="toggleTable()">Reportes Resueltos</button>
-
-    <table id="tabla-reportes" class="hidden">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Fecha Reporte</th>
-                <th>Correo Técnico</th>
-                <th>Prioridad</th>
-                <th>Comentarios</th>
-                <th>Fecha Resuelto</th>
-                <th>Calificacion</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($result_resueltos->num_rows > 0): ?>
-                <?php while ($reporte = $result_resueltos->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo $reporte['nombre']; ?></td>
-                        <td><?php echo $reporte['descripcion']; ?></td>
-                        <td><?php echo $reporte['fecha_reporte']; ?></td>
-                        <td><?php echo $reporte['correo_tecnico']; ?></td>
-                        <td><?php echo $reporte['prioridad']; ?></td>
-                        <td><?php echo $reporte['comentarios']; ?></td>
-                        <td><?php echo $reporte['fecha_resuelto']; ?></td>
-                        <td>
-    <form action="calificar.php" method="POST">
-        <!-- Campo oculto para el id del reporte -->
-        <input type="hidden" name="id_reporte" value="<?php echo $reporte['id']; ?>">
-
-        <!-- Campo para la calificación -->
-        <?php if ($reporte['calificacion']): ?>
-            <!-- Si ya tiene calificación, mostrar la calificación y deshabilitar el textarea -->
-            <textarea name="calificacion" rows="1" cols="10" placeholder="1 a 5" disabled><?php echo $reporte['calificacion']; ?></textarea>
-        <?php else: ?>
-            <!-- Si no tiene calificación, permitir editarla -->
-            <textarea name="calificacion" rows="1" cols="10" placeholder="1 a 5" required></textarea>
-        <?php endif; ?>
-
-        <!-- Botón para enviar la calificación -->
-        <button type="submit" <?php echo ($reporte['calificacion']) ? 'disabled' : ''; ?>>Calificar</button>
-    </form>
-</td>
-
-    </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
+<button onclick="toggleTableResueltos()">Reportes Resueltos</button>
+<table id="tabla-resueltos" class="hidden">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Fecha Reporte</th>
+            <th>Correo Técnico</th>
+            <th>Prioridad</th>
+            <th>Diagnostico</th>
+            <th>Solucion</th>
+            <th>Fecha Resuelto</th>
+            <th>Calificación</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if ($result_resueltos->num_rows > 0): ?>
+            <?php while ($reporte = $result_resueltos->fetch_assoc()): ?>
                 <tr>
-                    <td colspan="7">No hay reportes resueltos.</td>
+                    <td><?php echo $reporte['nombre']; ?></td>
+                    <td><?php echo $reporte['descripcion']; ?></td>
+                    <td><?php echo $reporte['fecha_reporte']; ?></td>
+                    <td><?php echo $reporte['correo_tecnico']; ?></td>
+                    <td><?php echo $reporte['prioridad']; ?></td>
+                    <td><?php echo $reporte['comentarios']; ?></td>
+                    <td><?php echo $reporte['solucion']; ?></td>
+                    <td><?php echo $reporte['fecha_resuelto']; ?></td>
+                    <td>
+                        <form action="calificar.php" method="POST">
+                            <input type="hidden" name="id_reporte" value="<?php echo $reporte['id']; ?>">
+                            <?php if ($reporte['calificacion']): ?>
+                                <textarea name="calificacion" rows="1" cols="10" placeholder="1 a 5" disabled><?php echo $reporte['calificacion']; ?></textarea>
+                            <?php else: ?>
+                                <textarea name="calificacion" rows="1" cols="10" placeholder="1 a 5" required></textarea>
+                            <?php endif; ?>
+                            <button type="submit" <?php echo ($reporte['calificacion']) ? 'disabled' : ''; ?>>Calificar</button>
+                        </form>
+                    </td>
                 </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="8">No hay reportes resueltos.</td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+<!-- Botón para reportes pendientes -->
+<BR><BR>
+<button onclick="toggleTablePendientes()">Reportes Pendientes</button>
+<table id="tabla-pendientes" class="hidden">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Fecha Reporte</th>
+            <th>Correo Técnico</th>
+            <th>Prioridad</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if ($result_pendientes->num_rows > 0): ?>
+            <?php while ($reporte = $result_pendientes->fetch_assoc()): ?>
+                <tr>
+                    <td><?php echo $reporte['nombre']; ?></td>
+                    <td><?php echo $reporte['descripcion']; ?></td>
+                    <td><?php echo $reporte['fecha_reporte']; ?></td>
+                    <td><?php echo $reporte['correo_tecnico']; ?></td>
+                    <td><?php echo $reporte['prioridad']; ?></td>
+                </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="5">No hay reportes pendientes.</td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+<style>
+    .hidden {
+        display: none;
+    }
+</style>
 
     <script>
 
