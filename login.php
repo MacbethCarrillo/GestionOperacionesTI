@@ -44,6 +44,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     case 'Administrador':
                         header("Location: admins.php");
                         break;
+                        case 'Especialista':
+                            header("Location: especialistas.php");
+                            break;
                     default:
                         $error = "Rol de usuario desconocido.";
                 }
