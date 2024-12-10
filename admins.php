@@ -228,14 +228,16 @@ textarea {
     }
 
     .modal1-content {
-        background-color: #fff;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 900px;
-        overflow-x: auto;
-    }
+    background-color: #fff;
+    margin: 5% auto; /* Reducí el margen superior para un mejor centrado */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 95%; /* Ocupe casi todo el ancho de la pantalla */
+    max-width: none; /* Elimina el límite de ancho máximo */
+    overflow-x: auto; /* Permite el desplazamiento horizontal si el contenido se desborda */
+}
+
+
 
     .close {
         color: #aaa;
@@ -358,9 +360,10 @@ function cargarProblemasFinalizados() {
             <!-- Campo: Técnico -->
             <label for="tecnico">Técnico:</label>
             <select id="tecnico" name="correo_tecnico" required>
-                <option value="">Seleccionar Técnico</option>
+                <option value="">Seleccionar Especialista</option>
+
                 <?php
-                // Obtener el área del usuario logueado
+                // Obtener técnicos dinámicamente si es necesario
                 $correo_usuario = $_SESSION['correo'];
                 $sql_usuario = "SELECT area FROM usuarios WHERE correo = ?";
                 $stmt_usuario = $conexion->prepare($sql_usuario);
@@ -373,9 +376,8 @@ function cargarProblemasFinalizados() {
                     $area_usuario = $usuario['area'];
 
                     // Obtener técnicos del mismo área
-                    $sql_tecnicos = "SELECT correo, nombre FROM usuarios WHERE rol = 'Tecnico' AND area = ?";
+                    $sql_tecnicos = "SELECT correo, nombre FROM usuarios WHERE rol = 'Especialista'";
                     $stmt_tecnicos = $conexion->prepare($sql_tecnicos);
-                    $stmt_tecnicos->bind_param("s", $area_usuario);
                     $stmt_tecnicos->execute();
                     $resultado_tecnicos = $stmt_tecnicos->get_result();
 
@@ -391,7 +393,7 @@ function cargarProblemasFinalizados() {
                         $reportesEnProceso = $reportes['total'];
 
                         // Mostrar la opción con la cantidad de reportes en proceso
-                        echo "<option value='{$tecnico['correo']}'>{$tecnico['nombre']} ({$tecnico['correo']}) - {$reportesEnProceso} en proceso</option>";
+                        echo "<option value='{$correo_tecnico}'>{$tecnico['nombre']} ({$correo_tecnico}) - {$reportesEnProceso} en proceso</option>";
 
                         $stmt_reportes->close();
                     }
@@ -410,10 +412,6 @@ function cargarProblemasFinalizados() {
         </form>
     </div>
 </div>
-
-
-
-
 
 <!-- CSS del Modal -->
 <style>
