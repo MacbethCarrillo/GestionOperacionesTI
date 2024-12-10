@@ -227,7 +227,6 @@ textarea {
 <body>
     <h1>Bienvenido Especialista en Sistemas Operativos</h1>
     <h1>Este es el portal para los Especialistas.</h1>
-    <p><strong>Área:</strong> <?php echo $_SESSION['area']; ?></p>
     <p><strong>Correo:</strong> <?php echo $_SESSION['correo']; ?></p>
     <a href="logout.php" class="btn-rojo">Cerrar sesión</a>
     
